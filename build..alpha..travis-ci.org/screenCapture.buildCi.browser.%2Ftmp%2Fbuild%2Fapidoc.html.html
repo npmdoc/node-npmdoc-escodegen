@@ -1,0 +1,598 @@
+<html><head></head><body><div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a href="http://github.com/estools/escodegen">escodegen (v1.8.1)</a>
+</h1>
+<h4>ECMAScript code generator</h4>
+<div class="apidocSectionDiv"><a href="#apidoc.tableOfContents" id="apidoc.tableOfContents"><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.escodegen">module escodegen</a><ol>
+
+        <li>
+
+            <span class="apidocSignatureSpan">boolean <span class="apidocSignatureSpan">escodegen.</span>browser</span>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.escodegen.attachComments">
+            function <span class="apidocSignatureSpan">escodegen.</span>attachComments
+            <span class="apidocSignatureSpan">(tree, providedComments, tokens)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.escodegen.generate">
+            function <span class="apidocSignatureSpan">escodegen.</span>generate
+            <span class="apidocSignatureSpan">(node, options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">escodegen.</span>FORMAT_DEFAULTS</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">escodegen.</span>FORMAT_MINIFY</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">escodegen.</span>Precedence</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">string <span class="apidocSignatureSpan">escodegen.</span>version</span>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.escodegen.attachComments">module escodegen.attachComments</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.escodegen.attachComments.attachComments">
+            function <span class="apidocSignatureSpan">escodegen.</span>attachComments
+            <span class="apidocSignatureSpan">(tree, providedComments, tokens)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.escodegen.generate">module escodegen.generate</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.escodegen.generate.generate">
+            function <span class="apidocSignatureSpan">escodegen.</span>generate
+            <span class="apidocSignatureSpan">(node, options)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.escodegen" id="apidoc.module.escodegen">module escodegen</a></h1>
+
+
+
+
+    <h2>
+        <a href="#apidoc.element.escodegen.attachComments" id="apidoc.element.escodegen.attachComments">
+        function <span class="apidocSignatureSpan">escodegen.</span>attachComments
+        <span class="apidocSignatureSpan">(tree, providedComments, tokens)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function attachComments(tree, providedComments, tokens) {
+    // At first, we should calculate extended comment ranges.
+    var comments = [], comment, len, i, cursor;
+
+    if (!tree.range) {
+        throw new Error('attachComments needs range information');
+    }
+
+    // tokens array is empty, we attach comments to tree as 'leadingComments'
+    if (!tokens.length) {
+        if (providedComments.length) {
+            for (i = 0, len = providedComments.length; i &lt; len; i += 1) {
+                comment = deepCopy(providedComments[i]);
+                comment.extendedRange = [0, tree.range[0]];
+                comments.push(comment);
+            }
+            tree.leadingComments = comments;
+        }
+        return tree;
+    }
+
+    for (i = 0, len = providedComments.length; i &lt; len; i += 1) {
+        comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
+    }
+
+    // This is based on John Freeman's implementation.
+    cursor = 0;
+    traverse(tree, {
+        enter: function (node) {
+            var comment;
+
+            while (cursor &lt; comments.length) {
+                comment = comments[cursor];
+                if (comment.extendedRange[1] &gt; node.range[0]) {
+                    break;
+                }
+
+                if (comment.extendedRange[1] === node.range[0]) {
+                    if (!node.leadingComments) {
+                        node.leadingComments = [];
+                    }
+                    node.leadingComments.push(comment);
+                    comments.splice(cursor, 1);
+                } else {
+                    cursor += 1;
+                }
+            }
+
+            // already out of owned node
+            if (cursor === comments.length) {
+                return VisitorOption.Break;
+            }
+
+            if (comments[cursor].extendedRange[0] &gt; node.range[1]) {
+                return VisitorOption.Skip;
+            }
+        }
+    });
+
+    cursor = 0;
+    traverse(tree, {
+        leave: function (node) {
+            var comment;
+
+            while (cursor &lt; comments.length) {
+                comment = comments[cursor];
+                if (node.range[1] &lt; comment.extendedRange[0]) {
+                    break;
+                }
+
+                if (node.range[1] === comment.extendedRange[0]) {
+                    if (!node.trailingComments) {
+                        node.trailingComments = [];
+                    }
+                    node.trailingComments.push(comment);
+                    comments.splice(cursor, 1);
+                } else {
+                    cursor += 1;
+                }
+            }
+
+            // already out of owned node
+            if (cursor === comments.length) {
+                return VisitorOption.Break;
+            }
+
+            if (comments[cursor].extendedRange[0] &gt; node.range[1]) {
+                return VisitorOption.Skip;
+            }
+        }
+    });
+
+    return tree;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.escodegen.generate" id="apidoc.element.escodegen.generate">
+        function <span class="apidocSignatureSpan">escodegen.</span>generate
+        <span class="apidocSignatureSpan">(node, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function generate(node, options) {
+    var defaultOptions = getDefaultOptions(), result, pair;
+
+    if (options != null) {
+        // Obsolete options
+        //
+        //   `options.indent`
+        //   `options.base`
+        //
+        // Instead of them, we can use `option.format.indent`.
+        if (typeof options.indent === 'string') {
+            defaultOptions.format.indent.style = options.indent;
+        }
+        if (typeof options.base === 'number') {
+            defaultOptions.format.indent.base = options.base;
+        }
+        options = updateDeeply(defaultOptions, options);
+        indent = options.format.indent.style;
+        if (typeof options.base === 'string') {
+            base = options.base;
+        } else {
+            base = stringRepeat(indent, options.format.indent.base);
+        }
+    } else {
+        options = defaultOptions;
+        indent = options.format.indent.style;
+        base = stringRepeat(indent, options.format.indent.base);
+    }
+    json = options.format.json;
+    renumber = options.format.renumber;
+    hexadecimal = json ? false : options.format.hexadecimal;
+    quotes = json ? 'double' : options.format.quotes;
+    escapeless = options.format.escapeless;
+    newline = options.format.newline;
+    space = options.format.space;
+    if (options.format.compact) {
+        newline = space = indent = base = '';
+    }
+    parentheses = options.format.parentheses;
+    semicolons = options.format.semicolons;
+    safeConcatenation = options.format.safeConcatenation;
+    directive = options.directive;
+    parse = json ? null : options.parse;
+    sourceMap = options.sourceMap;
+    sourceCode = options.sourceCode;
+    preserveBlankLines = options.format.preserveBlankLines &amp;&amp; sourceCode !== null;
+    extra = options;
+
+    if (sourceMap) {
+        if (!exports.browser) {
+            // We assume environment is node.js
+            // And prevent from including source-map by browserify
+            SourceNode = require('source-map').SourceNode;
+        } else {
+            SourceNode = global.sourceMap.SourceNode;
+        }
+    }
+
+    result = generateInternal(node);
+
+    if (!sourceMap) {
+        pair = {code: result.toString(), map: null};
+        return options.sourceMapWithCode ? pair : pair.code;
+    }
+
+
+    pair = result.toStringWithSourceMap({
+        file: options.file,
+        sourceRoot: options.sourceMapRoot
+    });
+
+    if (options.sourceContent) {
+        pair.map.setSourceContent(options.sourceMap,
+                                  options.sourceContent);
+    }
+
+    if (options.sourceMapWithCode) {
+        return pair;
+    }
+
+    return pair.map.toString();
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+    npm install escodegen
+
+### Usage
+
+A simple example: the program
+
+    escodegen.<span class="apidocCodeKeywordSpan">generate</span>({
+        type: 'BinaryExpression',
+        operator: '+',
+        left: { type: 'Literal', value: 40 },
+        right: { type: 'Literal', value: 2 }
+    });
+
+produces the string `'40 + 2'`.
+...</pre></li>
+    </ul>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.escodegen.attachComments" id="apidoc.module.escodegen.attachComments">module escodegen.attachComments</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.escodegen.attachComments.attachComments" id="apidoc.element.escodegen.attachComments.attachComments">
+        function <span class="apidocSignatureSpan">escodegen.</span>attachComments
+        <span class="apidocSignatureSpan">(tree, providedComments, tokens)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function attachComments(tree, providedComments, tokens) {
+    // At first, we should calculate extended comment ranges.
+    var comments = [], comment, len, i, cursor;
+
+    if (!tree.range) {
+        throw new Error('attachComments needs range information');
+    }
+
+    // tokens array is empty, we attach comments to tree as 'leadingComments'
+    if (!tokens.length) {
+        if (providedComments.length) {
+            for (i = 0, len = providedComments.length; i &lt; len; i += 1) {
+                comment = deepCopy(providedComments[i]);
+                comment.extendedRange = [0, tree.range[0]];
+                comments.push(comment);
+            }
+            tree.leadingComments = comments;
+        }
+        return tree;
+    }
+
+    for (i = 0, len = providedComments.length; i &lt; len; i += 1) {
+        comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
+    }
+
+    // This is based on John Freeman's implementation.
+    cursor = 0;
+    traverse(tree, {
+        enter: function (node) {
+            var comment;
+
+            while (cursor &lt; comments.length) {
+                comment = comments[cursor];
+                if (comment.extendedRange[1] &gt; node.range[0]) {
+                    break;
+                }
+
+                if (comment.extendedRange[1] === node.range[0]) {
+                    if (!node.leadingComments) {
+                        node.leadingComments = [];
+                    }
+                    node.leadingComments.push(comment);
+                    comments.splice(cursor, 1);
+                } else {
+                    cursor += 1;
+                }
+            }
+
+            // already out of owned node
+            if (cursor === comments.length) {
+                return VisitorOption.Break;
+            }
+
+            if (comments[cursor].extendedRange[0] &gt; node.range[1]) {
+                return VisitorOption.Skip;
+            }
+        }
+    });
+
+    cursor = 0;
+    traverse(tree, {
+        leave: function (node) {
+            var comment;
+
+            while (cursor &lt; comments.length) {
+                comment = comments[cursor];
+                if (node.range[1] &lt; comment.extendedRange[0]) {
+                    break;
+                }
+
+                if (node.range[1] === comment.extendedRange[0]) {
+                    if (!node.trailingComments) {
+                        node.trailingComments = [];
+                    }
+                    node.trailingComments.push(comment);
+                    comments.splice(cursor, 1);
+                } else {
+                    cursor += 1;
+                }
+            }
+
+            // already out of owned node
+            if (cursor === comments.length) {
+                return VisitorOption.Break;
+            }
+
+            if (comments[cursor].extendedRange[0] &gt; node.range[1]) {
+                return VisitorOption.Skip;
+            }
+        }
+    });
+
+    return tree;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.escodegen.generate" id="apidoc.module.escodegen.generate">module escodegen.generate</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.escodegen.generate.generate" id="apidoc.element.escodegen.generate.generate">
+        function <span class="apidocSignatureSpan">escodegen.</span>generate
+        <span class="apidocSignatureSpan">(node, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function generate(node, options) {
+    var defaultOptions = getDefaultOptions(), result, pair;
+
+    if (options != null) {
+        // Obsolete options
+        //
+        //   `options.indent`
+        //   `options.base`
+        //
+        // Instead of them, we can use `option.format.indent`.
+        if (typeof options.indent === 'string') {
+            defaultOptions.format.indent.style = options.indent;
+        }
+        if (typeof options.base === 'number') {
+            defaultOptions.format.indent.base = options.base;
+        }
+        options = updateDeeply(defaultOptions, options);
+        indent = options.format.indent.style;
+        if (typeof options.base === 'string') {
+            base = options.base;
+        } else {
+            base = stringRepeat(indent, options.format.indent.base);
+        }
+    } else {
+        options = defaultOptions;
+        indent = options.format.indent.style;
+        base = stringRepeat(indent, options.format.indent.base);
+    }
+    json = options.format.json;
+    renumber = options.format.renumber;
+    hexadecimal = json ? false : options.format.hexadecimal;
+    quotes = json ? 'double' : options.format.quotes;
+    escapeless = options.format.escapeless;
+    newline = options.format.newline;
+    space = options.format.space;
+    if (options.format.compact) {
+        newline = space = indent = base = '';
+    }
+    parentheses = options.format.parentheses;
+    semicolons = options.format.semicolons;
+    safeConcatenation = options.format.safeConcatenation;
+    directive = options.directive;
+    parse = json ? null : options.parse;
+    sourceMap = options.sourceMap;
+    sourceCode = options.sourceCode;
+    preserveBlankLines = options.format.preserveBlankLines &amp;&amp; sourceCode !== null;
+    extra = options;
+
+    if (sourceMap) {
+        if (!exports.browser) {
+            // We assume environment is node.js
+            // And prevent from including source-map by browserify
+            SourceNode = require('source-map').SourceNode;
+        } else {
+            SourceNode = global.sourceMap.SourceNode;
+        }
+    }
+
+    result = generateInternal(node);
+
+    if (!sourceMap) {
+        pair = {code: result.toString(), map: null};
+        return options.sourceMapWithCode ? pair : pair.code;
+    }
+
+
+    pair = result.toStringWithSourceMap({
+        file: options.file,
+        sourceRoot: options.sourceMapRoot
+    });
+
+    if (options.sourceContent) {
+        pair.map.setSourceContent(options.sourceMap,
+                                  options.sourceContent);
+    }
+
+    if (options.sourceMapWithCode) {
+        return pair;
+    }
+
+    return pair.map.toString();
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+    npm install escodegen
+
+### Usage
+
+A simple example: the program
+
+    escodegen.<span class="apidocCodeKeywordSpan">generate</span>({
+        type: 'BinaryExpression',
+        operator: '+',
+        left: { type: 'Literal', value: 40 },
+        right: { type: 'Literal', value: 2 }
+    });
+
+produces the string `'40 + 2'`.
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
+</body></html>
