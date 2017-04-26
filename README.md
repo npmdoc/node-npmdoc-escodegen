@@ -1,6 +1,6 @@
 # npmdoc-escodegen
 
-#### api documentation for  [escodegen (v1.8.1)](http://github.com/estools/escodegen)  [![npm package](https://img.shields.io/npm/v/npmdoc-escodegen.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-escodegen) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-escodegen.svg)](https://travis-ci.org/npmdoc/node-npmdoc-escodegen)
+#### basic api documentation for  [escodegen (v1.8.1)](http://github.com/estools/escodegen)  [![npm package](https://img.shields.io/npm/v/npmdoc-escodegen.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-escodegen) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-escodegen.svg)](https://travis-ci.org/npmdoc/node-npmdoc-escodegen)
 
 #### ECMAScript code generator
 
